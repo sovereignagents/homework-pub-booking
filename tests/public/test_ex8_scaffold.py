@@ -27,9 +27,10 @@ def test_voice_loop_module_exists() -> None:
 async def test_text_mode_appends_trace_events(tmp_path, monkeypatch) -> None:
     """Text mode should append voice.utterance_in and _out events for each turn."""
     import io
+
     from sovereign_agent.session.directory import create_session
 
-    from starter.voice_pipeline.manager_persona import ManagerPersona, ManagerTurn
+    from starter.voice_pipeline.manager_persona import ManagerTurn
 
     # Stub persona — doesn't call the LLM.
     class StubPersona:
@@ -48,6 +49,7 @@ async def test_text_mode_appends_trace_events(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("sys.stdin", io.StringIO("hello\nbook for 6\n\n"))
 
     from starter.voice_pipeline.voice_loop import run_text_mode
+
     await run_text_mode(session, StubPersona(), max_turns=4)
 
     trace = session.trace_path.read_text(encoding="utf-8")
@@ -59,6 +61,7 @@ async def test_text_mode_appends_trace_events(tmp_path, monkeypatch) -> None:
 async def test_voice_mode_falls_back_when_no_speechmatics_key(tmp_path, monkeypatch) -> None:
     """--voice without SPEECHMATICS_KEY should not crash — it falls back to text."""
     import io
+
     from sovereign_agent.session.directory import create_session
 
     from starter.voice_pipeline.manager_persona import ManagerTurn
@@ -81,6 +84,7 @@ async def test_voice_mode_falls_back_when_no_speechmatics_key(tmp_path, monkeypa
 
     # Must NOT raise — should degrade to text mode.
     from starter.voice_pipeline.voice_loop import run_voice_mode
+
     await run_voice_mode(session, StubPersona(), max_turns=2)
 
 

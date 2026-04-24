@@ -17,10 +17,9 @@ from typing import Literal
 from sovereign_agent.halves import HalfResult
 from sovereign_agent.halves.loop import LoopHalf
 from sovereign_agent.halves.structured import StructuredHalf
-from sovereign_agent.handoff import Handoff, read_handoff, write_handoff
+from sovereign_agent.handoff import Handoff
 from sovereign_agent.session.directory import Session
 from sovereign_agent.session.state import now_utc
-
 
 BridgeOutcome = Literal["completed", "failed", "max_rounds_exceeded"]
 
@@ -99,8 +98,7 @@ class HandoffBridge:
         checks the trace for these.
         """
         raise NotImplementedError(
-            "TODO Ex7: implement HandoffBridge.run(). "
-            "See the docstring for the expected algorithm."
+            "TODO Ex7: implement HandoffBridge.run(). See the docstring for the expected algorithm."
         )
 
 
@@ -125,9 +123,7 @@ def build_forward_handoff(session: Session, loop_result: HalfResult) -> Handoff:
     )
 
 
-def build_reverse_task(
-    loop_result: HalfResult, struct_result: HalfResult
-) -> dict:
+def build_reverse_task(loop_result: HalfResult, struct_result: HalfResult) -> dict:
     """Build the task dict to pass back to the loop half after a reject."""
     reason = struct_result.output.get("reason") or struct_result.summary
     return {

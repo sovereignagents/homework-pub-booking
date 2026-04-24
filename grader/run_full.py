@@ -138,11 +138,17 @@ def main() -> int:
 
     if args.output:
         import json
-        args.output.write_text(json.dumps({
-            "raw_score": report.raw_score,
-            "final_score": report.final_score,
-            "possible": report.possible,
-        }, indent=2))
+
+        args.output.write_text(
+            json.dumps(
+                {
+                    "raw_score": report.raw_score,
+                    "final_score": report.final_score,
+                    "possible": report.possible,
+                },
+                indent=2,
+            )
+        )
 
     print(render_markdown(report))
     return 0

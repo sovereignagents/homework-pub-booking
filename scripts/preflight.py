@@ -53,6 +53,7 @@ def section(title: str) -> None:
 
 # ── .env loader ─────────────────────────────────────────────────────
 
+
 def load_dotenv(path: Path) -> dict[str, str]:
     if not path.exists():
         return {}
@@ -62,7 +63,7 @@ def load_dotenv(path: Path) -> dict[str, str]:
         if not line or line.startswith("#"):
             continue
         if line.startswith("export "):
-            line = line[len("export "):]
+            line = line[len("export ") :]
         if "=" not in line:
             continue
         k, _, v = line.partition("=")
@@ -74,6 +75,7 @@ def load_dotenv(path: Path) -> dict[str, str]:
 
 
 # ── individual checks ───────────────────────────────────────────────
+
 
 def check_python() -> int:
     v = sys.version_info
@@ -209,6 +211,7 @@ def check_pytest_collects() -> int:
 
 
 # ── main ────────────────────────────────────────────────────────────
+
 
 def main() -> int:
     sys.path.insert(0, str(REPO_ROOT))

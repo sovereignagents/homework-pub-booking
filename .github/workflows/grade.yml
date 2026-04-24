@@ -1,0 +1,107 @@
+name: Grade
+
+# The authoritative grading run. Triggered:
+#   * manually at any time (workflow_dispatch) for test submissions
+#   * automatically at the cohort deadline via a scheduled trigger
+#     set up on the central grader orchestration repo (not here)
+#
+# Differences from ci.yml:
+#   * Uses a real NEBIUS_KEY from repo secrets.
+#   * Materialises tests/private/ from the grader repo (authenticated
+#     with PRIVATE_TESTS_DEPLOY_KEY).
+#   * Runs grader/run_full.py which invokes dataflow_probe and (on the
+#     grader repo side) the LLM-as-judge.
+#   * Posts the report as a commit comment and uploads archive.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit to grade (defaults to main HEAD)"
+        required: false
+        default: ""
+
+jobs:
+  grade:
+    name: Full grading run
+    runs-on: ubuntu-latest
+    environment:
+      name: grading
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout student repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.commit_sha || github.ref }}
+          fetch-depth: 1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Materialise private tests
+        # Pulls the grader's private test suite into tests/private/.
+        # The deploy key gives read-only access to the grader repo.
+        env:
+          DEPLOY_KEY: ${{ secrets.PRIVATE_TESTS_DEPLOY_KEY }}
+          GRADER_REPO: ${{ vars.GRADER_REPO }}
+        run: |
+          if [ -z "$DEPLOY_KEY" ]; then
+            echo "::warning::PRIVATE_TESTS_DEPLOY_KEY not configured — private tests will be empty"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          git clone --depth 1 "$GRADER_REPO" /tmp/grader-repo
+          cp -r /tmp/grader-repo/private_tests/* tests/private/
+
+      - name: Run the full grader
+        env:
+          NEBIUS_KEY: ${{ secrets.NEBIUS_KEY }}
+          SPEECHMATICS_KEY: ${{ secrets.SPEECHMATICS_KEY }}
+          # Judge credentials — a model DIFFERENT from what the student ran.
+          JUDGE_API_KEY: ${{ secrets.JUDGE_API_KEY }}
+        run: |
+          uv run python -m grader.run_full \
+            --student-repo . \
+            --output grade-report.json
+
+      - name: Upload grading artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: grade-report-${{ github.sha }}
+          path: |
+            grade-report.json
+            sessions/
+          retention-days: 90
+
+      - name: Post report as commit comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body;
+            try {
+              const report = JSON.parse(fs.readFileSync('grade-report.json', 'utf8'));
+              body = `## Grading result\n\n**Final score:** ${report.final_score} / ${report.possible}\n\nSee the artifact \`grade-report-${{ github.sha }}\` for the full report.`;
+            } catch (e) {
+              body = `## Grading failed to complete\n\n\`\`\`\n${e}\n\`\`\``;
+            }
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: body,
+            });

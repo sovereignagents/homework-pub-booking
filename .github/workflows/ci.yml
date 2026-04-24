@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-and-test:
+    name: Lint, format-check, public tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Ruff lint
+        run: uv run ruff check starter/ grader/ tests/ scripts/
+
+      - name: Ruff format --check
+        run: uv run ruff format --check starter/ grader/ tests/ scripts/
+
+      - name: Pytest — public tests only
+        env:
+          # CI uses a fake key so nebius_smoke isn't called; public tests
+          # don't need real LLM access.
+          NEBIUS_KEY: fake-key-for-ci-public-tests
+        run: uv run pytest tests/public -v --tb=short
+
+  scaffolds-run:
+    name: Offline scaffold runs green
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv python install 3.12
+      - run: uv sync --all-groups
+
+      # NOTE: these runs use FakeLLMClient and don't need a real key.
+      # They're meant to catch "student's scaffold imports but crashes
+      # immediately" regressions. If a student hasn't implemented the
+      # TODOs yet, these steps SHOULD fail with NotImplementedError —
+      # that's expected. We mark the job `continue-on-error` so PRs
+      # can still merge while work is in progress; the final grade run
+      # (grade.yml) requires real completion.
+      - name: Ex5 offline
+        continue-on-error: true
+        run: uv run python -m starter.edinburgh_research.run
+
+      - name: Grader check-submit (local, advisory)
+        continue-on-error: true
+        run: uv run python -m grader.check_submit
+
+  preflight:
+    name: Preflight scripts don't crash on import
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv python install 3.12
+      - run: uv sync --all-groups
+      - name: Compile preflight + nebius_smoke
+        run: |
+          uv run python -c "import py_compile; py_compile.compile('scripts/preflight.py', doraise=True)"
+          uv run python -c "import py_compile; py_compile.compile('scripts/nebius_smoke.py', doraise=True)"

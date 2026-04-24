@@ -21,14 +21,11 @@ import sys
 from pathlib import Path
 
 from grader.rubric import (
-    BEHAVIOURAL_MAX,
-    MECHANICAL_MAX,
     REASONING_MAX,
     CheckResult,
     GradeReport,
     LayerResult,
 )
-
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ANSWERS_DIR = REPO_ROOT / "answers"
@@ -37,11 +34,10 @@ STARTER_DIR = REPO_ROOT / "starter"
 
 # ─── helpers ────────────────────────────────────────────────────────
 
+
 def _run(cmd: list[str], timeout: int = 120) -> tuple[int, str, str]:
     try:
-        r = subprocess.run(
-            cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout
-        )
+        r = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True, timeout=timeout)
         return r.returncode, r.stdout, r.stderr
     except subprocess.TimeoutExpired:
         return 124, "", f"timed out after {timeout}s"
@@ -61,6 +57,7 @@ def _check(name: str, ok: bool, possible: float, detail: str = "") -> CheckResul
 
 # ─── Mechanical layer ───────────────────────────────────────────────
 
+
 def run_mechanical(only: str | None) -> LayerResult:
     layer = LayerResult(name="mechanical")
 
@@ -78,7 +75,7 @@ def run_mechanical(only: str | None) -> LayerResult:
 
     # pyproject pin
     pyproj = (REPO_ROOT / "pyproject.toml").read_text()
-    has_pin = re.search(r'sovereign-agent\s*==\s*0\.2\.0', pyproj) is not None
+    has_pin = re.search(r"sovereign-agent\s*==\s*0\.2\.0", pyproj) is not None
     layer.checks.append(
         _check(
             "pyproject_pins_sovereign_agent_0_2_0",
@@ -101,9 +98,7 @@ def run_mechanical(only: str | None) -> LayerResult:
 
     # public tests
     rc, out, _ = _run(["uv", "run", "pytest", "tests/public", "-q", "--no-header"])
-    layer.checks.append(
-        _check("public_tests_pass", rc == 0, 5, f"pytest rc={rc}")
-    )
+    layer.checks.append(_check("public_tests_pass", rc == 0, 5, f"pytest rc={rc}"))
 
     # answers
     expected = [
@@ -123,12 +118,9 @@ def run_mechanical(only: str | None) -> LayerResult:
         )
     )
 
-    # Answers not empty / still placeholder
-    placeholder_patterns = [
-        r"\*\(Write your answer below this line.*\)\*",  # the template placeholder
-        r"<your answer here>",
-        r"^TODO$",
-    ]
+    # Answers not empty / still placeholder. We look under "Your answer"
+    # headings and require ≥40 chars of substance after stripping the
+    # template placeholder text.
     empty: list[str] = []
     for a in expected:
         path = ANSWERS_DIR / a
@@ -195,6 +187,7 @@ def run_mechanical(only: str | None) -> LayerResult:
 
 # ─── Behavioural layer (partial — private parts skipped) ───────────
 
+
 def run_behavioural(only: str | None) -> LayerResult:
     layer = LayerResult(name="behavioural")
 
@@ -205,27 +198,22 @@ def run_behavioural(only: str | None) -> LayerResult:
     if only in (None, "ex6"):
         # Local doesn't spin Rasa; we run the validator normalisation tests
         # as a proxy.
-        rc, _, _ = _run(
-            ["uv", "run", "pytest", "tests/public/test_ex6_scaffold.py", "-q"]
-        )
+        rc, _, _ = _run(["uv", "run", "pytest", "tests/public/test_ex6_scaffold.py", "-q"])
         layer.checks.append(_check("ex6_structured_half_accepts_valid_booking", rc == 0, 4))
 
     if only in (None, "ex7"):
-        rc, _, _ = _run(
-            ["uv", "run", "pytest", "tests/public/test_ex7_scaffold.py", "-q"]
-        )
+        rc, _, _ = _run(["uv", "run", "pytest", "tests/public/test_ex7_scaffold.py", "-q"])
         layer.checks.append(_check("ex7_round_trip_completes", rc == 0, 6))
 
     if only in (None, "ex8"):
-        rc, _, _ = _run(
-            ["uv", "run", "pytest", "tests/public/test_ex8_scaffold.py", "-q"]
-        )
+        rc, _, _ = _run(["uv", "run", "pytest", "tests/public/test_ex8_scaffold.py", "-q"])
         layer.checks.append(_check("ex8_trace_has_utterance_events", rc == 0, 3))
 
     return layer
 
 
 # ─── Reasoning layer (local: skipped, notes only) ──────────────────
+
 
 def run_reasoning(only: str | None) -> LayerResult:
     layer = LayerResult(name="reasoning")
@@ -243,6 +231,7 @@ def run_reasoning(only: str | None) -> LayerResult:
 
 
 # ─── render ─────────────────────────────────────────────────────────
+
 
 def render_markdown(report: GradeReport) -> str:
     lines: list[str] = []
@@ -302,9 +291,9 @@ def main() -> int:
             "possible": report.possible,
             "penalties": [{"name": n, "points": p} for n, p in report.penalties],
             "layers": {
-                l.name: {
-                    "earned": l.earned,
-                    "possible": l.possible,
+                layer.name: {
+                    "earned": layer.earned,
+                    "possible": layer.possible,
                     "checks": [
                         {
                             "name": c.name,
@@ -313,10 +302,10 @@ def main() -> int:
                             "points_possible": c.points_possible,
                             "detail": c.detail,
                         }
-                        for c in l.checks
+                        for c in layer.checks
                     ],
                 }
-                for l in (mechanical, behavioural, reasoning)
+                for layer in (mechanical, behavioural, reasoning)
             },
         }
         print(json.dumps(out, indent=2))

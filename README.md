@@ -9,18 +9,26 @@ with a Llama-3.3-70B pub manager persona.
 
 ## What you'll build
 
-Five exercises, each worth ~20% of the grade:
+Five exercises. The full rubric is in `docs/grading-rubric.md` (30 Mechanical / 40 Behavioural / 30 Reasoning = 100 points). Rough weight of each exercise:
 
-- **Ex5 — Edinburgh research scenario.** Plan-and-execute loop that searches venues,
-  checks weather, calculates catering cost, and writes a flyer. Ships with a
-  dataflow integrity check that catches LLM fabrication.
-- **Ex6 — Rasa structured half.** A `StructuredHalf` subclass driven by Rasa CALM
-  flows. Students wire the custom `ActionValidateBooking`.
-- **Ex7 — Handoff bridge.** Bidirectional round-trip: loop half finds a venue →
-  structured half confirms → if the manager declines, control returns to the loop.
-- **Ex8 — Voice pipeline.** Llama-3.3-70B speaks as the pub manager; Speechmatics
-  ASR + ElevenLabs TTS (or text-only fallback).
-- **Ex9 — Reflection.** Three written questions grounded in your own logs.
+- **Ex5 — Edinburgh research scenario.** Plan-and-execute loop that searches
+  venues, checks weather, calculates catering cost, and writes a flyer.
+  Ships with a dataflow integrity check that catches LLM fabrication.
+  *(~20 points across Behavioural and the "integrity check present" rule)*
+- **Ex6 — Rasa structured half.** A `StructuredHalf` subclass driven by
+  Rasa CALM flows. Students wire the custom `ActionValidateBooking`.
+  *(~10 points)*
+- **Ex7 — Handoff bridge.** Bidirectional round-trip: loop half finds a
+  venue → structured half confirms → if the manager declines, control
+  returns to the loop.
+  *(~8 points + grounds Ex9-Q1)*
+- **Ex8 — Voice pipeline.** Llama-3.3-70B speaks as the pub manager;
+  Speechmatics ASR + ElevenLabs TTS (or text-only fallback).
+  *(~7 points)*
+- **Ex9 — Reflection.** Three written questions grounded in your own
+  logs. Each cites specific facts from a session that actually ran on
+  your machine.
+  *(30 points — this is the whole Reasoning layer)*
 
 See `ASSIGNMENT.md` for the full spec, `SETUP.md` for installation, and
 `docs/grading-rubric.md` for what's graded.

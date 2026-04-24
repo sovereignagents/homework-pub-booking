@@ -16,7 +16,6 @@ from sovereign_agent._internal.llm_client import (
     OpenAICompatibleClient,
 )
 
-
 # TODO: if you want to tweak the persona (accent, attitude, name), edit
 # here. Keep the rules section intact — the grader's judge checks that
 # the manager's decisions still follow them.

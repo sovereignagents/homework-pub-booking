@@ -5,8 +5,6 @@ Structure-only; real round-trip execution is in tests/private/.
 
 from __future__ import annotations
 
-import pytest
-
 
 def test_bridge_module_exposes_expected_api() -> None:
     from starter.handoff_bridge import bridge
@@ -53,6 +51,7 @@ def test_build_forward_handoff_produces_valid_handoff() -> None:
 
 def test_build_reverse_task_carries_rejection_reason() -> None:
     from sovereign_agent.halves import HalfResult
+
     from starter.handoff_bridge.bridge import build_reverse_task
 
     loop_result = HalfResult(success=True, output={"venue": "haymarket_tap"}, summary="")

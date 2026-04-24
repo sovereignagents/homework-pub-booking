@@ -31,7 +31,7 @@ def _load_dotenv() -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         if line.startswith("export "):
-            line = line[len("export "):]
+            line = line[len("export ") :]
         k, _, v = line.partition("=")
         k, v = k.strip(), v.strip()
         if v and v[0] in "\"'" and v[0] == v[-1]:
@@ -88,14 +88,16 @@ async def probe() -> int:
 
     content = (resp.choices[0].message.content or "").strip()
     if not content:
-        print(f"{YELLOW}  ⚠  LLM returned empty content but didn't error. Probably rate-limited.{RESET}")
+        print(
+            f"{YELLOW}  ⚠  LLM returned empty content but didn't error. Probably rate-limited.{RESET}"
+        )
         return 0
     print(f"{GREEN}  ✓  LLM reachable — {base_url}{RESET}")
     print(f"{DIM}       model: {model}, reply: {content!r}{RESET}")
     print()
     print(f"{GREEN}{BOLD}  ✓  All checks passed — ready to start the homework!{RESET}")
     print()
-    print(f"  Next steps:")
+    print("  Next steps:")
     print(f"    {GREEN}make ex5{RESET}        run Ex5 offline")
     print(f"    {GREEN}make ex5-real{RESET}   run Ex5 against the real LLM")
     print(f"    {GREEN}make test{RESET}       run the public test suite")

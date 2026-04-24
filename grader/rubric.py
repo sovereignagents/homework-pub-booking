@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 # ─── layer weights ──────────────────────────────────────────────────
 MECHANICAL_MAX = 30
 BEHAVIOURAL_MAX = 40
@@ -66,7 +65,11 @@ class GradeReport:
 
 # ─── Mechanical checks (30 pts total) ──────────────────────────────
 MECHANICAL_CHECKS = [
-    ("repo_has_required_top_level_files", 2, "README.md, ASSIGNMENT.md, pyproject.toml, Makefile present"),
+    (
+        "repo_has_required_top_level_files",
+        2,
+        "README.md, ASSIGNMENT.md, pyproject.toml, Makefile present",
+    ),
     ("pyproject_pins_sovereign_agent_0_2_0", 2, "sovereign-agent==0.2.0 in dependencies"),
     ("make_setup_green", 3, "`make setup` succeeds in a clean venv"),
     ("ruff_lint_clean", 3, "`make lint` exits 0"),

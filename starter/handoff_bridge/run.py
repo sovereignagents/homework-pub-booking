@@ -18,7 +18,6 @@ from sovereign_agent.session.directory import create_session
 
 # NOTE: we import from the starter packages — this forces your code to
 # actually work end-to-end rather than relying on framework defaults.
-from starter.handoff_bridge.bridge import HandoffBridge
 
 
 async def run_scenario(real: bool) -> int:

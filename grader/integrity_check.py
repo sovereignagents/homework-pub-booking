@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-
 SCENARIO_DIRS = [
     "starter/edinburgh_research",
     "starter/handoff_bridge",

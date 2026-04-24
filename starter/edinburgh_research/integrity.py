@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -30,7 +30,7 @@ class ToolCallRecord:
     tool_name: str
     arguments: dict
     output: dict
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
 
 
 # Module-level log. Tools append to this; verify_dataflow reads it.

@@ -14,7 +14,6 @@ from __future__ import annotations
 import subprocess
 import sys
 from dataclasses import dataclass
-from pathlib import Path
 
 
 @dataclass
@@ -42,8 +41,6 @@ def probe_ex5() -> ProbeResult:
     # Import the student's modules. If they fail to import, we can't probe.
     try:
         from starter.edinburgh_research.integrity import (
-            _TOOL_CALL_LOG,
-            clear_log,
             verify_dataflow,
         )
     except Exception as exc:  # noqa: BLE001

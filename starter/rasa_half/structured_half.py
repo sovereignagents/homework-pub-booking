@@ -12,9 +12,6 @@ from sovereign_agent.halves import HalfResult
 from sovereign_agent.halves.structured import StructuredHalf
 from sovereign_agent.session.directory import Session
 
-from starter.rasa_half.validator import normalise_booking_payload
-
-
 RASA_REST_WEBHOOK_DEFAULT = "http://localhost:5005/webhooks/rest/webhook"
 
 

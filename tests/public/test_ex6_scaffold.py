@@ -11,14 +11,16 @@ import pytest
 
 
 def test_structured_half_subclass_exists() -> None:
-    from starter.rasa_half.structured_half import RasaStructuredHalf
     from sovereign_agent.halves.structured import StructuredHalf
+
+    from starter.rasa_half.structured_half import RasaStructuredHalf
 
     assert issubclass(RasaStructuredHalf, StructuredHalf)
 
 
 def test_structured_half_has_discover() -> None:
     from sovereign_agent.discovery import validate_schema
+
     from starter.rasa_half.structured_half import RasaStructuredHalf
 
     half = RasaStructuredHalf()
@@ -26,6 +28,7 @@ def test_structured_half_has_discover() -> None:
 
 
 # ─── validator ─────────────────────────────────────────────────────
+
 
 def test_parse_currency_gbp_accepts_multiple_forms() -> None:
     from starter.rasa_half.validator import parse_currency_gbp

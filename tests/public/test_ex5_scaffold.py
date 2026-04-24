@@ -15,11 +15,11 @@ import pytest
 
 from starter.edinburgh_research import integrity
 
-
 SAMPLE_DATA = Path(__file__).resolve().parents[2] / "starter" / "edinburgh_research" / "sample_data"
 
 
 # ─── fixtures exist and are sane ────────────────────────────────────
+
 
 def test_venues_fixture_has_expected_entries() -> None:
     data = json.loads((SAMPLE_DATA / "venues.json").read_text())
@@ -42,6 +42,7 @@ def test_catering_fixture_has_base_rates() -> None:
 
 
 # ─── integrity module exists and has the expected API ──────────────
+
 
 def test_integrity_module_exposes_required_names() -> None:
     for name in [
@@ -76,12 +77,13 @@ def test_fact_appears_in_log_helper() -> None:
 
 # ─── tools module structure ─────────────────────────────────────────
 
+
 def test_tools_module_registers_four_tools() -> None:
     """build_tool_registry() must produce a registry with our four
     tools plus the sovereign-agent builtins."""
-    from sovereign_agent.session.directory import create_session
-
     import tempfile
+
+    from sovereign_agent.session.directory import create_session
 
     from starter.edinburgh_research.tools import build_tool_registry
 
@@ -103,9 +105,9 @@ def test_tools_module_registers_four_tools() -> None:
 
 def test_generate_flyer_is_not_parallel_safe() -> None:
     """Writes must never be parallelised — grader checks this explicitly."""
-    from sovereign_agent.session.directory import create_session
-
     import tempfile
+
+    from sovereign_agent.session.directory import create_session
 
     from starter.edinburgh_research.tools import build_tool_registry
 
@@ -123,9 +125,9 @@ def test_generate_flyer_is_not_parallel_safe() -> None:
 
 def test_read_only_tools_are_parallel_safe() -> None:
     """venue_search, get_weather, calculate_cost should be parallel-safe."""
-    from sovereign_agent.session.directory import create_session
-
     import tempfile
+
+    from sovereign_agent.session.directory import create_session
 
     from starter.edinburgh_research.tools import build_tool_registry
 
@@ -143,14 +145,13 @@ def test_read_only_tools_are_parallel_safe() -> None:
 
 # ─── verify_dataflow contract ───────────────────────────────────────
 
+
 def test_verify_dataflow_returns_integrity_result() -> None:
     """Once implemented, verify_dataflow returns an IntegrityResult.
     This test will fail with NotImplementedError until you implement
     it — that's expected; make it pass as the first step."""
     integrity.clear_log()
-    integrity.record_tool_call(
-        "calculate_cost", {}, {"total_gbp": 540, "deposit_required_gbp": 0}
-    )
+    integrity.record_tool_call("calculate_cost", {}, {"total_gbp": 540, "deposit_required_gbp": 0})
 
     try:
         result = integrity.verify_dataflow("Total: £540. Deposit: £0.")
@@ -167,9 +168,7 @@ def test_verify_dataflow_returns_integrity_result() -> None:
 def test_verify_dataflow_catches_obvious_fabrication() -> None:
     """If the flyer says £9999 but no tool ever returned 9999, fail."""
     integrity.clear_log()
-    integrity.record_tool_call(
-        "calculate_cost", {}, {"total_gbp": 540, "deposit_required_gbp": 0}
-    )
+    integrity.record_tool_call("calculate_cost", {}, {"total_gbp": 540, "deposit_required_gbp": 0})
 
     try:
         result = integrity.verify_dataflow("Total: £9999 (this was never computed).")
