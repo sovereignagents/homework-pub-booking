@@ -219,9 +219,7 @@ def main() -> int:
         # pedagogical framing.
         combined = (proc.stdout or "") + (proc.stderr or "")
         if proc.returncode != 0 and "NotImplementedError" in combined:
-            tail_lines = [
-                ln for ln in combined.splitlines() if "NotImplementedError" in ln
-            ]
+            tail_lines = [ln for ln in combined.splitlines() if "NotImplementedError" in ln]
             _print_notimpl_bootstrap("\n".join(tail_lines))
 
         return proc.returncode

@@ -1,15 +1,42 @@
 flows:
   # ─────────────────────────────────────────────────────────────────
-  # confirm_booking — happy path
-  # Entry: programmatic `/confirm_booking` with metadata.booking
-  # containing {venue_id, date, time, party_size, deposit_gbp}.
+  # confirm_booking — the ONE flow this homework uses.
   #
-  # ActionValidateBooking reads the metadata, sets slots, and
-  # populates `validation_error` (either with a reason string or null).
-  # The `next:` block branches on that slot.
+  # Entry: programmatic. RasaStructuredHalf POSTs:
+  #   {"sender": "...", "message": "/confirm_booking",
+  #    "metadata": {"booking": {"venue_id": ..., "party_size": 6, ...}}}
+  #
+  # Rasa's CompactLLMCommandGenerator parses "/confirm_booking" and
+  # emits a StartFlow(confirm_booking) command. The flow then runs
+  # ActionValidateBooking, which:
+  #   1. reads tracker.latest_message.metadata.booking (our booking data)
+  #   2. sets each slot
+  #   3. validates against rules (party_size <= 8, deposit <= £300)
+  #   4. sets validation_error slot (either a reason or None)
+  #   5. if valid, also sets booking_reference
+  #
+  # The rest of the flow branches on validation_error to utter the
+  # right response.
+  #
+  # Why only ONE flow?
+  #   Earlier designs had `resume_from_loop` (programmatic re-entry)
+  #   and `request_research` (bounces back to the loop). We removed
+  #   both because:
+  #   - `resume_from_loop`'s `collect:` steps would need user-facing
+  #     utter_ask_* responses, which we don't have (and don't want —
+  #     the homework triggers flows programmatically, never via
+  #     user typing).
+  #   - `request_research`'s reverse-handoff is better done at the
+  #     HandoffBridge level in Python (Ex7), not inside Rasa. Keeping
+  #     the reverse path out of Rasa also teaches students that the
+  #     agent-bridge pattern spans process boundaries — it isn't a
+  #     dialog concern.
   # ─────────────────────────────────────────────────────────────────
   confirm_booking:
-    description: Confirm a new pub booking after validating party size and deposit.
+    description: >
+      Confirm a pub booking after validating party size and deposit.
+      Triggers when the user sends the programmatic command
+      /confirm_booking with booking metadata.
     steps:
       - id: validate
         action: action_validate_booking
@@ -22,30 +49,4 @@ flows:
         next: END
       - id: confirmed
         action: utter_booking_confirmed
-        next: END
-
-  # ─────────────────────────────────────────────────────────────────
-  # resume_from_loop — programmatic re-entry from the loop half.
-  # Collects missing slots (if any), then links into confirm_booking.
-  # In normal flow, the loop half handoff already populates metadata,
-  # so the collect: steps are a safety net rather than a real prompt
-  # (programmatic triggering bypasses user input).
-  # ─────────────────────────────────────────────────────────────────
-  resume_from_loop:
-    description: Resume booking confirmation when handed off from the loop half.
-    steps:
-      - collect: venue_id
-      - collect: date
-      - collect: time
-      - collect: party_size
-      - collect: deposit_gbp
-      - link: confirm_booking
-
-  # ─────────────────────────────────────────────────────────────────
-  # request_research — bounces control BACK to the loop half.
-  # ─────────────────────────────────────────────────────────────────
-  request_research:
-    description: Return control to the research agent for an alternative venue.
-    steps:
-      - action: utter_returning_to_research
         next: END

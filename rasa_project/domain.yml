@@ -44,10 +44,6 @@ responses:
     - text: "Booking confirmed. Reference: {booking_reference}."
   utter_booking_rejected:
     - text: "Sorry, we can't accept this booking. Reason: {validation_error}"
-  utter_need_more_info:
-    - text: "I need a few more details before I can confirm."
-  utter_returning_to_research:
-    - text: "Let me hand this back to the research agent for an alternative."
 
 actions:
   - action_validate_booking
