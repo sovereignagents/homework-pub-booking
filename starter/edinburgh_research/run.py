@@ -71,7 +71,7 @@ def _build_fake_client() -> FakeLLMClient:
         name="calculate_cost",
         arguments={
             "venue_id": "haymarket_tap",
-            "party_size": 6,
+            "party_size": 5,
             "duration_hours": 3,
             "catering_tier": "bar_snacks",
         },
@@ -85,10 +85,10 @@ def _build_fake_client() -> FakeLLMClient:
                 "venue_address": "12 Dalry Rd, Edinburgh EH11 2BG",
                 "date": "2026-04-25",
                 "time": "19:30",
-                "party_size": 6,
+                "party_size": 5,
                 "condition": "cloudy",
                 "temperature_c": 12,
-                "total_gbp": 540,
+                "total_gbp": 497,
                 "deposit_required_gbp": 0,
             }
         },

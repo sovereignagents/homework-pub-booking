@@ -109,7 +109,7 @@ def fact_appears_in_log(fact: Any, log: list[ToolCallRecord] | None = None) -> b
             return any(_scan(v) for v in obj)
         return False
 
-    return any(_scan(r.output) or _scan(r.arguments) for r in records)
+    return any(_scan(r.output) for r in records)
 
 
 # ---------------------------------------------------------------------------
@@ -138,10 +138,13 @@ def verify_dataflow(flyer_content: str) -> IntegrityResult:
             ok=True, summary="no extractable facts in flyer (verified vacuously)"
         )
 
+    # Filter out generate_flyer own records
+    filtered_log = [r for r in _TOOL_CALL_LOG if r.tool_name != "generate_flyer"]
+
     verified: list[str] = []
     unverified: list[str] = []
     for fact in deduped:
-        if fact_appears_in_log(fact):
+        if fact_appears_in_log(fact, log=filtered_log):
             verified.append(fact)
         else:
             unverified.append(fact)
