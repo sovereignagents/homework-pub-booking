@@ -93,25 +93,17 @@ class RasaStructuredHalf(StructuredHalf):
             )
 
         booking = rasa_msg["metadata"]["booking"]
-        body = json.dumps(
-            {
-                "sender": rasa_msg["sender"],
-                "message": rasa_msg["message"],
-                "metadata": {"booking": booking},
-            }
-        ).encode("utf-8")
-        req = urllib_request.Request(
-            self.rasa_url,
-            data=body,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
+        # TODO: Construct the request body using `rasa_msg`. It needs to be a JSON string encoded as utf-8.
+        # Ensure you include 'sender', 'message', and 'metadata' containing 'booking'.
 
+        # TODO: Create a urllib_request.Request object pointing to `self.rasa_url`, with the encoded body.
+        # Make sure to set the Content-Type header to application/json and method to POST.
+
+        # We execute the blocking urllib call in a thread pool for async compatibility
         try:
-            raw_response = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: urllib_request.urlopen(req, timeout=self.request_timeout_s).read(),
-            )
+            # TODO: Execute the request using `urllib_request.urlopen` in a lambda passed to run_in_executor.
+            # Use `self.request_timeout_s` as the timeout.
+            raise NotImplementedError("TODO: Implement HTTP POST to Rasa")
         except HTTPError as e:
             return HalfResult(
                 success=False,
@@ -155,62 +147,17 @@ class RasaStructuredHalf(StructuredHalf):
                 next_action="escalate",
             )
 
-        confirmed = False
-        rejected = False
-        rejection_reason = ""
-        booking_reference = None
-        for m in messages:
-            if not isinstance(m, dict):
-                continue
-            text = (m.get("text") or "").lower()
-            custom = m.get("custom") or {}
-            action = custom.get("action") if isinstance(custom, dict) else None
-
-            if action == "committed" or "booking confirmed" in text:
-                confirmed = True
-                if isinstance(custom, dict):
-                    booking_reference = custom.get("booking_reference")
-                if "reference:" in text and not booking_reference:
-                    booking_reference = text.split("reference:", 1)[1].strip().rstrip(".").upper()
-            if action == "rejected" or "can't accept" in text or "rejected" in text:
-                rejected = True
-                rejection_reason = text or "rejected by rasa"
-
-        if confirmed and not rejected:
-            return HalfResult(
-                success=True,
-                output={
-                    "committed": True,
-                    "booking": booking,
-                    "booking_reference": booking_reference,
-                    "rasa_response": messages,
-                },
-                summary=f"booking confirmed by rasa (ref={booking_reference})",
-                next_action="complete",
-            )
-
-        if rejected:
-            return HalfResult(
-                success=False,
-                output={
-                    "rejected": True,
-                    "reason": rejection_reason,
-                    "rasa_response": messages,
-                    "booking": booking,
-                },
-                summary=f"rasa rejected: {rejection_reason}",
-                next_action="escalate",
-            )
-
-        return HalfResult(
-            success=False,
-            output={
-                "rasa_response": messages,
-                "note": "neither confirmation nor rejection detected",
-            },
-            summary="rasa returned unexpected output",
-            next_action="escalate",
-        )
+        # TODO: Parse the Rasa response array (`messages`).
+        # Loop through `messages`. Look for a 'custom' dict containing 'action' == 'committed' or 'rejected'.
+        # Set `confirmed`, `rejected`, `rejection_reason` and `booking_reference` accordingly.
+        # Note: If action is 'committed', extract 'booking_reference' from 'custom' or text.
+        # If action is 'rejected', extract 'rejection_reason' from 'text'.
+        
+        # TODO: Return the appropriate HalfResult.
+        # - If confirmed and not rejected: success=True, next_action="complete", include booking reference in output.
+        # - If rejected: success=False, next_action="escalate", include reason in output.
+        # - If neither: success=False, next_action="escalate", note unexpected output.
+        raise NotImplementedError("TODO: Parse Rasa response and return HalfResult")
 
 
 # ─────────────────────────────────────────────────────────────────────

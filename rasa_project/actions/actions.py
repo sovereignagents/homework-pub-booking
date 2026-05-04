@@ -115,22 +115,11 @@ class ActionValidateBooking(Action):
         except (TypeError, ValueError):
             return slot_events + [SlotSet("validation_error", "invalid_deposit")]
 
-        # Rule checks
-        if party_int > MAX_PARTY_SIZE_FOR_AUTO_BOOKING:
-            return slot_events + [SlotSet("validation_error", "party_too_large")]
-
-        if deposit_int > MAX_DEPOSIT_FOR_AUTO_BOOKING_GBP:
-            return slot_events + [SlotSet("validation_error", "deposit_too_high")]
-
-        # Success — generate a deterministic booking reference
-        ref = (
-            "BK-"
-            + hashlib.sha1(f"{venue_id}|{date}|{time_slot}|{party_int}".encode())
-            .hexdigest()[:8]
-            .upper()
-        )
-
-        return slot_events + [
-            SlotSet("validation_error", None),
-            SlotSet("booking_reference", ref),
-        ]
+        # TODO: Implement Rule checks
+        # 1. Check if party_int is greater than MAX_PARTY_SIZE_FOR_AUTO_BOOKING. If so, return slot_events with a SlotSet for validation_error = "party_too_large".
+        # 2. Check if deposit_int is greater than MAX_DEPOSIT_FOR_AUTO_BOOKING_GBP. If so, return slot_events with a SlotSet for validation_error = "deposit_too_high".
+        
+        # TODO: Success case
+        # Generate a deterministic booking reference (e.g. using hashlib.sha1 on venue_id, date, time_slot, party_int).
+        # Return slot_events + [SlotSet("validation_error", None), SlotSet("booking_reference", ref)]
+        raise NotImplementedError("TODO: Implement Rule checks in ActionValidateBooking")
