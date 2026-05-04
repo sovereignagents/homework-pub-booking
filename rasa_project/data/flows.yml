@@ -38,15 +38,11 @@ flows:
       Triggers when the user sends the programmatic command
       /confirm_booking with booking metadata.
     steps:
-      - id: validate
-        action: action_validate_booking
-        next:
-          - if: "slots.validation_error is not null"
-            then: rejected
-          - else: confirmed
-      - id: rejected
-        action: utter_booking_rejected
-        next: END
-      - id: confirmed
-        action: utter_booking_confirmed
-        next: END
+      # TODO: Implement step logic here.
+      # The flow should:
+      # 1. Trigger the action `action_validate_booking` (id: validate).
+      # 2. Transition (next) based on the slot `validation_error`.
+      #    - if: "slots.validation_error is not null" -> then: rejected
+      #    - else: confirmed
+      # 3. Create 'rejected' step that calls `utter_booking_rejected` and next is END.
+      # 4. Create 'confirmed' step that calls `utter_booking_confirmed` and next is END.
