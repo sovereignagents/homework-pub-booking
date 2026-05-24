@@ -79,11 +79,7 @@ def check_cost_booking_input(
             message=message,
         )
 
-    if (
-        catering_tier is None
-        or not isinstance(catering_tier, str)
-        or not catering_tier.strip()
-    ):
+    if catering_tier is None or not isinstance(catering_tier, str) or not catering_tier.strip():
         message = "catering_tier must be a non-empty string"
         return _invalid_cost_input_result(
             arguments=arguments,

@@ -17,6 +17,8 @@ import asyncio
 import json
 import os
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
 
 from sovereign_agent._internal.llm_client import (
     FakeLLMClient,
@@ -33,9 +35,6 @@ from sovereign_agent.tickets.ticket import list_tickets
 
 from starter.edinburgh_research.integrity import clear_log, verify_dataflow
 from starter.edinburgh_research.tools import build_tool_registry
-from datetime import datetime, timedelta
-import json
-from pathlib import Path
 
 # Load available weather fixture dates dynamically
 WEATHER_FIXTURE = Path("starter/edinburgh_research/sample_data/weather.json")
@@ -46,9 +45,7 @@ with WEATHER_FIXTURE.open() as f:
 STABLE_EVENT_DATE = max(weather_data["edinburgh"].keys())
 STABLE_WEATHER = weather_data["edinburgh"][STABLE_EVENT_DATE]
 
-STABLE_EVENT_TIME = (
-    datetime.now() + timedelta(hours=2)
-).strftime("%H:%M")
+STABLE_EVENT_TIME = (datetime.now() + timedelta(hours=2)).strftime("%H:%M")
 
 
 def _build_fake_client() -> FakeLLMClient:
@@ -210,8 +207,7 @@ def _recover_missing_flyer(session) -> bool:
         (
             record
             for record in reversed(_TOOL_CALL_LOG)
-            if record.tool_name == "venue_search"
-            and record.output.get("selected_venue")
+            if record.tool_name == "venue_search" and record.output.get("selected_venue")
         ),
         None,
     )
@@ -219,8 +215,7 @@ def _recover_missing_flyer(session) -> bool:
         (
             record
             for record in reversed(_TOOL_CALL_LOG)
-            if record.tool_name == "get_weather"
-            and "error" not in record.output
+            if record.tool_name == "get_weather" and "error" not in record.output
         ),
         None,
     )

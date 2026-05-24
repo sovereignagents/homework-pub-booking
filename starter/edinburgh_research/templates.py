@@ -2,7 +2,6 @@
 
 from html import escape
 
-
 DEBUG_FIELDS = [
     ("venue_name", "Venue", "text", "2"),
     ("venue_address", "Address", "text", "3"),
@@ -103,7 +102,7 @@ def render_debug_flyer_html(event_details: dict) -> str:
     flyer_html = render_flyer_html(event_details)
     inputs = "\n".join(
         (
-            f'        <label>{escape(label)}'
+            f"        <label>{escape(label)}"
             f' <input type="{input_type}" data-target-testid="{testid}" '
             f'name="{escape(key, quote=True)}" '
             f'value="{escape(str(event_details[key]), quote=True)}"></label>'

@@ -1,5 +1,3 @@
-
-
 """Ex5 tools. Four tools the agent uses to research an Edinburgh booking.
 
 Each tool:
@@ -20,25 +18,22 @@ import json
 import os
 from pathlib import Path
 
-from sovereign_agent import session
-from sovereign_agent.tools.registry import ToolRegistry, ToolResult, _RegisteredTool
 from sovereign_agent.errors import ToolError
 from sovereign_agent.session.directory import Session
-from sovereign_agent.tools.registry import ToolResult
-
+from sovereign_agent.tools.registry import ToolRegistry, ToolResult, _RegisteredTool
 
 from starter.edinburgh_research.data_process import (
-    BookingInput,
     calculate_deposit,
     check_cost_booking_input,
 )
 from starter.edinburgh_research.data_read_write import (
-    load_venues,
-    load_catering,
     check_flyer_event_details,
-    write_flyer)
+    load_catering,
+    load_venues,
+    write_flyer,
+)
+from starter.edinburgh_research.integrity import _TOOL_CALL_LOG, record_tool_call
 from starter.edinburgh_research.templates import render_debug_flyer_html, render_flyer_html
-from starter.edinburgh_research.integrity import record_tool_call, _TOOL_CALL_LOG
 
 SAMPLE_DATA = Path(__file__).parent / "sample_data"
 
@@ -64,7 +59,6 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
     """
     # TODO 1a: load venues.json. Raise ToolError(SA_TOOL_DEPENDENCY_MISSING)
     #          if the file is absent.
-
 
     previous_search = next(
         (
@@ -101,10 +95,7 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
     venues = load_venues()
     near_lower = near.strip().lower().replace(" station", "").strip()
 
-    search_count = sum(
-        1 for record in _TOOL_CALL_LOG
-        if record.tool_name == "venue_search"
-    )
+    search_count = sum(1 for record in _TOOL_CALL_LOG if record.tool_name == "venue_search")
 
     if search_count >= 2:
         output = {
@@ -132,7 +123,6 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
             ),
         )
 
-
     def area_matches(venue: dict) -> bool:
         area = venue.get("area", "").lower()
         address = venue.get("address", "").lower()
@@ -154,17 +144,13 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
 
         return near_lower in area or near_lower in address or near_lower in name
 
-
     results = [
         venue
         for venue in venues
         if venue.get("open_now") is True
-           and area_matches(venue)
-           and venue.get("seats_available_evening", 0) >= party_size
-           and (
-                   venue.get("hire_fee_gbp", 0)
-                   + venue.get("min_spend_gbp", 0)
-           ) <= budget_max_gbp
+        and area_matches(venue)
+        and venue.get("seats_available_evening", 0) >= party_size
+        and (venue.get("hire_fee_gbp", 0) + venue.get("min_spend_gbp", 0)) <= budget_max_gbp
     ]
 
     if not results:
@@ -172,11 +158,8 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
             venue
             for venue in venues
             if venue.get("open_now") is True
-               and venue.get("seats_available_evening", 0) >= 6
-               and (
-                       venue.get("hire_fee_gbp", 0)
-                       + venue.get("min_spend_gbp", 0)
-               ) <= 800
+            and venue.get("seats_available_evening", 0) >= 6
+            and (venue.get("hire_fee_gbp", 0) + venue.get("min_spend_gbp", 0)) <= 800
         ]
 
     chosen = results[0] if results else None
@@ -190,7 +173,9 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
             "venue_id": chosen["id"],
             "venue_name": chosen["name"],
             "venue_address": chosen["address"],
-        } if chosen else None,
+        }
+        if chosen
+        else None,
     }
 
     if chosen:
@@ -222,6 +207,7 @@ def venue_search(near: str, party_size: int, budget_max_gbp: int = 1000) -> Tool
         output=output,
         summary=summary,
     )
+
 
 # ---------------------------------------------------------------------------
 # TODO 2 — get_weather
@@ -290,8 +276,7 @@ def get_weather(city: str, date: str) -> ToolResult:
     }
 
     summary = (
-        f"get_weather({city}, {date}): "
-        f"{weather.get('condition')}, {weather.get('temperature_c')}C"
+        f"get_weather({city}, {date}): {weather.get('condition')}, {weather.get('temperature_c')}C"
     )
 
     record_tool_call(
@@ -301,6 +286,7 @@ def get_weather(city: str, date: str) -> ToolResult:
     )
 
     return ToolResult(success=True, output=output, summary=summary)
+
 
 # ---------------------------------------------------------------------------
 # TODO 3 — calculate_cost
@@ -373,10 +359,7 @@ def calculate_cost(
     service_charge_percent = catering["service_charge_percent"]
 
     subtotal = round(
-        base_per_head
-        * venue_mult
-        * booking.party_size
-        * max(1, booking.duration_hours)
+        base_per_head * venue_mult * booking.party_size * max(1, booking.duration_hours)
     )
     service = round(subtotal * service_charge_percent / 100)
 
@@ -412,7 +395,6 @@ def calculate_cost(
         "deposit_required_gbp": deposit_required,
     }
 
-
     record_tool_call("calculate_cost", arguments, output)
 
     return ToolResult(
@@ -424,7 +406,6 @@ def calculate_cost(
             "Use total_gbp and deposit_required_gbp for generate_flyer."
         ),
     )
-
 
 
 # ---------------------------------------------------------------------------
@@ -442,10 +423,7 @@ def _fact_seen_in_tool_output(tool_name: str, fact: object) -> bool:
             return any(scan(value) for value in obj)
         return False
 
-    return any(
-        record.tool_name == tool_name and scan(record.output)
-        for record in _TOOL_CALL_LOG
-    )
+    return any(record.tool_name == tool_name and scan(record.output) for record in _TOOL_CALL_LOG)
 
 
 def _fact_seen_in_tool_call(tool_name: str, fact: object) -> bool:
@@ -461,8 +439,7 @@ def _fact_seen_in_tool_call(tool_name: str, fact: object) -> bool:
         return False
 
     return any(
-        record.tool_name == tool_name and scan(record.arguments)
-        for record in _TOOL_CALL_LOG
+        record.tool_name == tool_name and scan(record.arguments) for record in _TOOL_CALL_LOG
     )
 
 
@@ -551,7 +528,6 @@ def _canonical_flyer_details_from_tool_log(fallback_time: str) -> dict | None:
     }
 
 
-
 def generate_flyer(session: Session, event_details: dict) -> ToolResult:
     """Produce an HTML flyer and write it to workspace/flyer.html.
 
@@ -574,7 +550,6 @@ def generate_flyer(session: Session, event_details: dict) -> ToolResult:
     IMPORTANT: this tool MUST be registered with parallel_safe=False
     because it writes a file.
     """
-
 
     arguments = {"event_details": event_details}
 
@@ -627,7 +602,6 @@ def generate_flyer(session: Session, event_details: dict) -> ToolResult:
         output=output,
         summary=f"generate_flyer: wrote workspace/flyer.html ({len(html)} chars)",
     )
-
 
 
 # ---------------------------------------------------------------------------

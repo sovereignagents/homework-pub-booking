@@ -188,4 +188,3 @@ __all__ = [
     "load_venues",
     "write_flyer",
 ]
-

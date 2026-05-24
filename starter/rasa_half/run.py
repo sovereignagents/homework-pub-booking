@@ -52,7 +52,7 @@ async def run_scenario(real: bool, auto: bool) -> int:
                 "venue_id": "Haymarket Tap",
                 "date": "25th April 2026",
                 "time": "7:30pm",
-                "party_size": "10",
+                "party_size": "6",
                 "deposit": "£200",
             }
         }

@@ -62,14 +62,11 @@ def validate_structured_input(structured_input: dict) -> None:
 
 def validate_required_booking_fields(data: dict, *, error_prefix: str) -> None:
     """Validate that booking data contains all required fields."""
-    missing_fields = sorted(
-        field for field in REQUIRED_BOOKING_FIELDS if not data.get(field)
-    )
+    missing_fields = sorted(field for field in REQUIRED_BOOKING_FIELDS if not data.get(field))
 
     if missing_fields:
         raise ValueError(
-            f"{error_prefix} is missing required field(s): "
-            + ", ".join(missing_fields)
+            f"{error_prefix} is missing required field(s): " + ", ".join(missing_fields)
         )
 
 
@@ -87,9 +84,7 @@ def validate_half_result(result: HalfResult, *, actor: str) -> None:
     handoff_payload = getattr(result, "handoff_payload", None)
 
     if output is None and handoff_payload is None and not summary:
-        raise ValueError(
-            f"{actor} half result must contain output, handoff_payload, or summary"
-        )
+        raise ValueError(f"{actor} half result must contain output, handoff_payload, or summary")
 
 
 def validate_forward_handoff(handoff: Handoff) -> None:

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-
 CLARIFICATION_TEXT = "Sorry, I didnae catch that clearly. Could you say it again?"
 
 

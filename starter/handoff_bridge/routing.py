@@ -8,24 +8,13 @@ structured half rejects a proposal.
 from __future__ import annotations
 
 from sovereign_agent.halves import HalfResult
-from sovereign_agent.halves.loop import LoopHalf
-from sovereign_agent.halves.structured import StructuredHalf
-from sovereign_agent.handoff import Handoff, write_handoff
+from sovereign_agent.handoff import Handoff
 from sovereign_agent.session.directory import Session
 from sovereign_agent.session.state import now_utc
 
-
-from starter.handoff_bridge.types import BridgeOutcome, BridgeResult
-
-
+from starter.handoff_bridge.types import BridgeResult
 
 """Routing helpers for Ex7 handoff bridge."""
-
-
-from sovereign_agent.halves import HalfResult
-from sovereign_agent.session.directory import Session
-
-from starter.handoff_bridge.types import BridgeResult
 
 
 def route_bridge_exception(
@@ -246,7 +235,6 @@ def route_max_rounds_exceeded(
         final_half_result=final_half_result,
         summary=f"bridge exhausted {max_rounds} rounds without resolution",
     )
-
 
 
 def build_forward_handoff(session: Session, loop_result: HalfResult) -> Handoff:

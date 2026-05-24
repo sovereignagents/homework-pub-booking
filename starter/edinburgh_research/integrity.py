@@ -15,9 +15,9 @@ variations (leading £, trailing C, case differences).
 
 from __future__ import annotations
 
-import re
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -245,10 +245,7 @@ def fact_appears_in_log(
 
     return any(
         record.tool_name not in excluded
-        and (
-            _scan(record.output)
-            or (include_arguments and _scan(record.arguments))
-        )
+        and (_scan(record.output) or (include_arguments and _scan(record.arguments)))
         for record in records
     )
 
@@ -396,11 +393,7 @@ def verify_dataflow(flyer_content: str) -> IntegrityResult:
 
     verified: list[str] = []
     unverified: list[str] = _source_consistency_failures()
-    source_records = [
-        record
-        for record in _TOOL_CALL_LOG
-        if record.tool_name != "generate_flyer"
-    ]
+    source_records = [record for record in _TOOL_CALL_LOG if record.tool_name != "generate_flyer"]
 
     for fact in deduped:
         if fact_appears_in_log(fact, source_records, include_arguments=False):
@@ -424,6 +417,7 @@ def verify_dataflow(flyer_content: str) -> IntegrityResult:
         verified_facts=verified,
         summary=f"dataflow OK: verified {len(verified)} fact(s) against tool outputs",
     )
+
 
 __all__ = [
     "IntegrityResult",

@@ -14,7 +14,6 @@ from sovereign_agent.handoff import Handoff, write_handoff
 from sovereign_agent.session.directory import Session
 from sovereign_agent.session.state import now_utc
 
-
 from starter.handoff_bridge.routing import (
     route_bridge_exception,
     route_loop_completed,
@@ -57,11 +56,11 @@ class HandoffBridge:
     ACTION_ESCALATE = "escalate"
 
     def __init__(
-            self,
-            *,
-            loop_half: LoopHalf,
-            structured_half: StructuredHalf,
-            max_rounds: int = 3,
+        self,
+        *,
+        loop_half: LoopHalf,
+        structured_half: StructuredHalf,
+        max_rounds: int = 3,
     ) -> None:
         self.loop_half = loop_half
         self.structured_half = structured_half

@@ -39,7 +39,9 @@ REDIRECT_CLOSE_TEXT = (
     "should be better set up for it. Hope they sort you out."
 )
 GOODBYE_TEXT = "Aye, thanks for calling Haymarket Tap. Goodbye."
-CONFIRMATION_CLOSE_TEXT = "Grand, that's confirmed for you. Thanks for calling Haymarket Tap. Goodbye."
+CONFIRMATION_CLOSE_TEXT = (
+    "Grand, that's confirmed for you. Thanks for calling Haymarket Tap. Goodbye."
+)
 
 
 # ---------------------------------------------------------------------------
@@ -472,13 +474,16 @@ def _is_terminal_hard_decline(text: str) -> bool:
     """Return true when the manager has ended the current booking path."""
     normalized = text.lower()
     capacity_decline = (
-        ("cannot accommodate" in normalized or "can't accommodate" in normalized)
-        and ("royal oak" in normalized or "bennet" in normalized)
-    )
+        "cannot accommodate" in normalized or "can't accommodate" in normalized
+    ) and ("royal oak" in normalized or "bennet" in normalized)
     deposit_signoff = (
         ("£300" in normalized or "300" in normalized)
         and ("consult my manager" in normalized or "manager" in normalized)
-        and ("call later" in normalized or "call you later" in normalized or "follow up" in normalized)
+        and (
+            "call later" in normalized
+            or "call you later" in normalized
+            or "follow up" in normalized
+        )
     )
     return capacity_decline or deposit_signoff
 
