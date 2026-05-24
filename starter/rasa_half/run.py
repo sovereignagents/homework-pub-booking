@@ -23,6 +23,7 @@ what tier 2 teaches.
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
 
 from sovereign_agent._internal.paths import example_sessions_dir
@@ -51,7 +52,7 @@ async def run_scenario(real: bool, auto: bool) -> int:
                 "venue_id": "Haymarket Tap",
                 "date": "25th April 2026",
                 "time": "7:30pm",
-                "party_size": "6",
+                "party_size": "10",
                 "deposit": "£200",
             }
         }
@@ -96,6 +97,23 @@ async def run_scenario(real: bool, auto: bool) -> int:
         print(f"\nStructured half outcome: {result.next_action}")
         print(f"  summary: {result.summary}")
         print(f"  output:  {result.output}")
+
+        result_path = session.workspace_dir / "structured_result.json"
+        result_path.parent.mkdir(parents=True, exist_ok=True)
+        result_path.write_text(
+            json.dumps(
+                {
+                    "success": result.success,
+                    "next_action": result.next_action,
+                    "summary": result.summary,
+                    "output": result.output,
+                },
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
+        print(f"  saved:   {result_path}")
 
         if real:
             print(f"\n📂 Session artifacts: {session.directory}")

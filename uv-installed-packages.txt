@@ -1,0 +1,13 @@
+sovereign-agent==0.2.0
+httpx
+openai
+pydantic
+typer
+rich
+python-dotenv
+pyyaml
+croniter
+
+pytest
+pytest-asyncio
+ruff

@@ -1,0 +1,25 @@
+# Docker endpoints for Ex6.
+#
+# The Rasa server container must call the action server by Docker service
+# name, not localhost. The model_groups match endpoints.yml.
+
+action_endpoint:
+  url: "http://action-server:5055/webhook"
+
+model_groups:
+  - id: nebius_llm
+    models:
+      - provider: self-hosted
+        model: meta-llama/Llama-3.3-70B-Instruct
+        api_base: "https://api.tokenfactory.nebius.com/v1"
+        api_key: ${NEBIUS_KEY}
+        temperature: 0.1
+        max_tokens: 1024
+        timeout: 30
+
+  - id: nebius_embeddings
+    models:
+      - provider: openai
+        model: Qwen/Qwen3-Embedding-8B
+        api_base: "https://api.tokenfactory.nebius.com/v1"
+        api_key: ${NEBIUS_KEY}

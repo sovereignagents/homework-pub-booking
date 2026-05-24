@@ -80,7 +80,7 @@ def _build_fake_client_two_rounds() -> FakeLLMClient:
                                 "date": "2026-04-25",
                                 "time": "19:30",
                                 "party_size": "12",
-                                "deposit": "£0",
+                                "deposit": "£300",
                             },
                         },
                     )

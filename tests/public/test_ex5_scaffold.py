@@ -178,3 +178,97 @@ def test_verify_dataflow_catches_obvious_fabrication() -> None:
     assert result.ok is False, "£9999 was not in any tool output — should be flagged"
     assert any("9999" in uf for uf in result.unverified_facts)
     integrity.clear_log()
+
+
+def test_verify_dataflow_catches_fabricated_html_flyer_fact() -> None:
+    """A value copied only through generate_flyer args is still fabrication."""
+    integrity.clear_log()
+    integrity.record_tool_call(
+        "venue_search",
+        {"near": "Haymarket", "party_size": 6},
+        {
+            "selected_venue": {
+                "venue_name": "haymarket tap",
+                "venue_address": "12 dalry rd, edinburgh eh11 2bg",
+            }
+        },
+    )
+    integrity.record_tool_call(
+        "get_weather",
+        {"city": "edinburgh", "date": "2026-05-02"},
+        {"date": "2026-05-02", "condition": "cloudy", "temperature_c": 13},
+    )
+    integrity.record_tool_call(
+        "calculate_cost",
+        {"venue_id": "haymarket_tap", "party_size": 6},
+        {"party_size": 6, "total_gbp": 556, "deposit_required_gbp": 111},
+    )
+    integrity.record_tool_call(
+        "generate_flyer",
+        {"event_details": {"date": "2023-09-15"}},
+        {"path": "workspace/flyer.html"},
+    )
+
+    flyer = """
+    <p><span data-testid="2">haymarket tap</span></p>
+    <p><span data-testid="3">12 dalry rd, edinburgh eh11 2bg</span></p>
+    <p><span data-testid="4">2023-09-15</span></p>
+    <p><span data-testid="6">6</span></p>
+    <p><span data-testid="7">cloudy</span>, <span data-testid="8">13</span>°C</p>
+    <p>£<span data-testid="9">556</span></p>
+    <p>£<span data-testid="10">111</span></p>
+    """
+
+    result = integrity.verify_dataflow(flyer)
+
+    assert result.ok is False
+    assert "2023-09-15" in result.unverified_facts
+    integrity.clear_log()
+
+
+def test_verify_dataflow_catches_inconsistent_source_tool_chain() -> None:
+    """Source tools must agree; sourced-but-conflicting facts are invalid."""
+    integrity.clear_log()
+    integrity.record_tool_call(
+        "venue_search",
+        {"near": "Haymarket", "party_size": 6},
+        {
+            "party_size": 6,
+            "selected_venue": {
+                "venue_id": "haymarket_tap",
+                "venue_name": "haymarket tap",
+                "venue_address": "12 dalry rd, edinburgh eh11 2bg",
+            },
+        },
+    )
+    integrity.record_tool_call(
+        "get_weather",
+        {"city": "edinburgh", "date": "2026-05-02"},
+        {"date": "2026-05-02", "condition": "cloudy", "temperature_c": 13},
+    )
+    integrity.record_tool_call(
+        "calculate_cost",
+        {"venue_id": "royal_oak", "party_size": 10},
+        {
+            "venue_id": "royal_oak",
+            "party_size": 10,
+            "total_gbp": 1103,
+            "deposit_required_gbp": 331,
+        },
+    )
+
+    flyer = """
+    <p><span data-testid="2">haymarket tap</span></p>
+    <p><span data-testid="3">12 dalry rd, edinburgh eh11 2bg</span></p>
+    <p><span data-testid="4">2026-05-02</span></p>
+    <p><span data-testid="6">10</span></p>
+    <p><span data-testid="7">cloudy</span>, <span data-testid="8">13</span>°C</p>
+    <p>£<span data-testid="9">1103</span></p>
+    <p>£<span data-testid="10">331</span></p>
+    """
+
+    result = integrity.verify_dataflow(flyer)
+
+    assert result.ok is False
+    assert any("source mismatch" in fact for fact in result.unverified_facts)
+    integrity.clear_log()

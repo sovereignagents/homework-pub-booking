@@ -1,0 +1,3 @@
+/Users/mihalis/PycharmProjects/homework-pub-booking/.venv/bin/python
+/Users/mihalis/PycharmProjects/homework-pub-booking/.venv/bin/python
+3.12.13 (main, Mar 25 2026, 03:16:06) [Clang 22.1.1 ]

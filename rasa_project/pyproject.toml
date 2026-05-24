@@ -1,0 +1,29 @@
+[project]
+name = "homework-pub-booking-rasa"
+version = "0.1.0"
+description = "Standalone Rasa Pro CALM environment for Ex6"
+requires-python = ">=3.10,<3.12"
+dependencies = [
+  # Keep Rasa in its own Python 3.10/3.11 environment. The homework root
+  # project uses Python 3.12, but this macOS 12 arm64 machine needs the
+  # older faiss wheel line used by Rasa Pro 3.13.x.
+  "rasa-pro>=3.13,<3.14",
+  "rasa-sdk>=3.13,<3.14",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["actions"]
+
+[tool.uv]
+constraint-dependencies = [
+  "faiss-cpu>=1.7.4,<1.8.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = [".venv", ".rasa", "models", "__pycache__"]

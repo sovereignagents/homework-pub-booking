@@ -1,0 +1,36 @@
+services:
+  action-server:
+    image: rasa/rasa-pro-actions:latest
+    platform: linux/amd64
+    env_file:
+      - ../.env
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: ["run", "actions", "--actions", "actions", "--port", "5055"]
+    ports:
+      - "5055:5055"
+
+  rasa-server:
+    image: rasa/rasa-pro:latest
+    platform: linux/amd64
+    env_file:
+      - ../.env
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command:
+      [
+        "run",
+        "--enable-api",
+        "--cors",
+        "*",
+        "--port",
+        "5005",
+        "--endpoints",
+        "endpoints.docker.yml",
+      ]
+    ports:
+      - "5005:5005"
+    depends_on:
+      - action-server

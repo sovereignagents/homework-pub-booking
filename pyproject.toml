@@ -13,6 +13,7 @@ dependencies = [
   "sovereign-agent == 0.2.0",
   "python-dotenv >= 1.0.0",
   "pyyaml >= 6.0",
+  "rasa-sdk>=3.16.1",
 ]
 
 [project.optional-dependencies]
@@ -71,7 +72,12 @@ target-version = "py312"
 select = ["E", "F", "W", "I", "N", "UP", "B"]
 ignore = ["E501"]
 
-[tool.uv]
+
 # Lockfile is committed (`uv.lock`) so every student gets byte-identical
 # installs. Regenerate only via `uv lock --upgrade` when we deliberately
 # want a newer patch of a transitive dep.
+
+[tool.uv]
+required-environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'"
+]

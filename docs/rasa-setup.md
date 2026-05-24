@@ -11,15 +11,16 @@ If you just want the recipe: `make ex6-help`.
 ## Step 0 — Install rasa-pro (one-time)
 
 rasa-pro is an opt-in dependency (~400MB, not included in `make setup`).
-Install it once with:
+It runs in its own uv environment under `rasa_project/.venv`, separate
+from the homework root Python 3.12 environment. Install it once with:
 
 ```bash
 make setup-rasa
 ```
 
-That runs `uv sync --extra rasa` under the hood. After this, the
-`rasa` CLI is available in the homework's `.venv` and `make rasa-*`
-targets will work.
+That runs `uv sync` inside `rasa_project/`. After this, the `rasa` CLI
+is available through that project's `.venv` and `make rasa-*` targets
+will work.
 
 If you don't install rasa-pro, you can still complete tier 1 of Ex6
 using the mock server (`make ex6`).

@@ -182,17 +182,17 @@ check-submit: ## Run the local grader (advisory — CI at deadline is the author
 # "Failed to spawn rasa" error uv gives. Students can't miss it.
 
 define _rasa_preflight
-	@if ! $(UV) run --no-sync which rasa >/dev/null 2>&1; then \
+	@if ! cd rasa_project && $(UV) run --no-sync which rasa >/dev/null 2>&1; then \
 	  echo ""; \
 	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
-	  echo "  ✗ rasa-pro isn't installed in this venv yet"; \
+	  echo "  ✗ rasa-pro isn't installed in rasa_project/.venv yet"; \
 	  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
 	  echo ""; \
-	  echo "  rasa-pro is an opt-in extra (~400MB of deps). Install it with:"; \
+	  echo "  Rasa uses its own Python 3.10/3.11 uv environment. Install it with:"; \
 	  echo ""; \
 	  echo "      make setup-rasa"; \
 	  echo ""; \
-	  echo "  That runs 'uv sync --extra rasa'. Takes 1-2 minutes on first install."; \
+	  echo "  That runs 'uv sync' inside rasa_project/. Takes 1-2 minutes on first install."; \
 	  echo "  Then re-run this command."; \
 	  echo ""; \
 	  echo "  Don't want to install rasa-pro yet?"; \
@@ -204,9 +204,9 @@ endef
 
 .PHONY: setup-rasa
 setup-rasa: ## Install rasa-pro + deps (needed for Ex6 tier 2 and 3)
-	@echo "▶ Installing rasa-pro and related deps into .venv..."
+	@echo "▶ Installing rasa-pro and related deps into rasa_project/.venv..."
 	@echo "   This is a one-time ~1-2 minute install."
-	@$(UV) sync --extra rasa
+	@cd rasa_project && $(UV) sync
 	@echo "✓ rasa-pro installed. You can now run: make rasa-actions / make rasa-serve"
 
 .PHONY: setup-voice
@@ -280,11 +280,19 @@ narrate-latest: ## Narrate the most recent session — useful right after `make 
 
 .PHONY: ex5
 ex5: ## Run Ex5 (Edinburgh research) in offline FakeLLMClient mode
-	@$(UV) run python -m starter.edinburgh_research.run
+	@EX5_DEBUG_FLYER=$(DEBUG) $(UV) run python -m starter.edinburgh_research.run
+
+.PHONY: ex5-debug
+ex5-debug: ## Run Ex5 offline and write interactive debug controls into workspace/flyer.html
+	@EX5_DEBUG_FLYER=1 $(UV) run python -m starter.edinburgh_research.run
 
 .PHONY: ex5-real
 ex5-real: ## Run Ex5 against the real Nebius LLM (uses tokens!)
-	@$(UV) run python -m starter.edinburgh_research.run --real
+	@EX5_DEBUG_FLYER=$(DEBUG) $(UV) run python -m starter.edinburgh_research.run --real
+
+.PHONY: ex5-real-debug
+ex5-real-debug: ## Run Ex5 real mode and write interactive debug controls into workspace/flyer.html
+	@EX5_DEBUG_FLYER=1 $(UV) run python -m starter.edinburgh_research.run --real
 
 .PHONY: ex6
 ex6: ## Ex6 (mock) — offline Rasa mock, no setup needed (tier 1)
@@ -305,6 +313,10 @@ ex6-help: ## Print the three-terminal recipe for Ex6 real mode
 .PHONY: ex7
 ex7: ## Run Ex7 (handoff bridge) end-to-end
 	@$(UV) run python -m starter.handoff_bridge.run
+
+.PHONY: ex7-real
+ex7-real: ## Run Ex7 with real LLM in the loop
+	@$(UV) run python -m starter.handoff_bridge.run --real --auto
 
 .PHONY: ex8-text
 ex8-text: ## Run Ex8 (voice pipeline) in TEXT-ONLY mode — no Speechmatics needed

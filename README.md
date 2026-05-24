@@ -155,6 +155,10 @@ print(result.summary)
 # Expected: dataflow FAIL: 1 unverified fact(s): ['£9999']
 ```
 
+The direct check reloads the session's persisted `workspace/tool_call_log.json`;
+run `make ex5` again first if you're checking an older session that predates
+that file.
+
 If your check passes with £9999 in the flyer, it's too lenient. The
 grader plants exactly this fabrication during scoring.
 

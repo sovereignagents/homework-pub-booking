@@ -109,3 +109,44 @@ def test_normalise_booking_payload_produces_rasa_shape() -> None:
     assert normalisations_applied >= 3, (
         f"only {normalisations_applied}/5 normalisations applied; grader wants ≥ 3"
     )
+
+
+@pytest.mark.asyncio
+async def test_structured_half_rejects_high_deposit_even_if_rasa_confirms(monkeypatch) -> None:
+    """Fail closed if a stale/noisy Rasa flow confirms a policy violation."""
+    import json
+
+    from starter.rasa_half import structured_half
+    from starter.rasa_half.structured_half import RasaStructuredHalf
+
+    class FakeResponse:
+        def read(self) -> bytes:
+            return json.dumps(
+                [
+                    {
+                        "text": "Booking confirmed. Reference: BK-BAD.",
+                        "custom": {"action": "committed", "booking_reference": "BK-BAD"},
+                    }
+                ]
+            ).encode("utf-8")
+
+    monkeypatch.setattr(structured_half.urllib_request, "urlopen", lambda *a, **k: FakeResponse())
+
+    half = RasaStructuredHalf(rasa_url="http://rasa.test/webhooks/rest/webhook")
+    result = await half.run(
+        session=None,  # type: ignore[arg-type]
+        input_payload={
+            "data": {
+                "action": "confirm_booking",
+                "venue_id": "Haymarket Tap",
+                "date": "2026-04-25",
+                "time": "19:30",
+                "party_size": "6",
+                "deposit": "£500",
+            }
+        },
+    )
+
+    assert not result.success
+    assert result.next_action == "escalate"
+    assert result.output["policy_violation"] == "deposit_too_high"

@@ -23,22 +23,29 @@ import sys
 import wave
 
 from sovereign_agent.session.directory import Session
-from sovereign_agent.session.state import now_utc
 
+from starter.voice_pipeline.input_validation import validate_entry_message
 from starter.voice_pipeline.manager_persona import ManagerPersona
+from starter.voice_pipeline.trace_events import log_utterance_in, log_utterance_out
 
 # Audio config — matches Speechmatics' default expectations
 SAMPLE_RATE = 16000
 CHANNELS = 1
 SAMPLE_WIDTH = 2  # 16-bit PCM
 MAX_UTTERANCE_S = 15.0  # cap per-turn recording
-SILENCE_TIMEOUT_S = 2.0  # consecutive silence to end an utterance
+SILENCE_TIMEOUT_S = 10.0  # consecutive silence to end an utterance
+REDIRECT_CLOSE_TEXT = (
+    "No worries. I can't make that booking here, but The Royal Oak or Bennet's Bar "
+    "should be better set up for it. Hope they sort you out."
+)
+GOODBYE_TEXT = "Aye, thanks for calling Haymarket Tap. Goodbye."
+CONFIRMATION_CLOSE_TEXT = "Grand, that's confirmed for you. Thanks for calling Haymarket Tap. Goodbye."
 
 
 # ---------------------------------------------------------------------------
 # Text mode — reference implementation (read this first)
 # ---------------------------------------------------------------------------
-async def run_text_mode(session: Session, persona: ManagerPersona, max_turns: int = 6) -> None:
+async def run_text_mode(session: Session, persona: ManagerPersona, max_turns: int = 10) -> None:
     """Conversation via stdin/stdout. Same trace-event shape as voice mode."""
     print("Text mode. Type a message to Alasdair (pub manager); blank line to quit.")
     print(f"Session: {session.session_id}")
@@ -52,26 +59,31 @@ async def run_text_mode(session: Session, persona: ManagerPersona, max_turns: in
         if not user_text:
             break
 
-        session.append_trace_event(
-            {
-                "event_type": "voice.utterance_in",
-                "actor": "user",
-                "timestamp": now_utc().isoformat(),
-                "payload": {"text": user_text, "turn": turn_idx, "mode": "text"},
-            }
-        )
+        log_utterance_in(session, user_text, turn_idx, mode="text")
 
-        manager_text = await persona.respond(user_text)
+        validation = validate_entry_message(user_text)
+        if not validation.usable:
+            print(f"alasdair> {validation.clarification}")
+            log_utterance_out(session, validation.clarification, turn_idx, mode="text")
+            continue
+
+        if _is_redirect_acknowledgement(validation.text, persona):
+            print(f"alasdair> {REDIRECT_CLOSE_TEXT}")
+            log_utterance_out(session, REDIRECT_CLOSE_TEXT, turn_idx, mode="text")
+            break
+
+        if _is_confirmation_acknowledgement(validation.text, persona):
+            print(f"alasdair> {CONFIRMATION_CLOSE_TEXT}")
+            log_utterance_out(session, CONFIRMATION_CLOSE_TEXT, turn_idx, mode="text")
+            break
+
+        manager_text = await persona.respond(validation.text)
         print(f"alasdair> {manager_text}")
+        _print_judgement(persona)
 
-        session.append_trace_event(
-            {
-                "event_type": "voice.utterance_out",
-                "actor": "manager",
-                "timestamp": now_utc().isoformat(),
-                "payload": {"text": manager_text, "turn": turn_idx, "mode": "text"},
-            }
-        )
+        log_utterance_out(session, manager_text, turn_idx, mode="text")
+        if _is_terminal_hard_decline(manager_text):
+            break
 
     print("-" * 60)
     print(f"Conversation ended. Trace: {session.trace_path}")
@@ -80,7 +92,7 @@ async def run_text_mode(session: Session, persona: ManagerPersona, max_turns: in
 # ---------------------------------------------------------------------------
 # Voice mode — real Speechmatics STT + Rime Arcana TTS
 # ---------------------------------------------------------------------------
-async def run_voice_mode(session: Session, persona: ManagerPersona, max_turns: int = 6) -> None:
+async def run_voice_mode(session: Session, persona: ManagerPersona, max_turns: int = 10) -> None:
     """Voice mode. Real mic capture → Speechmatics STT → manager → Rime TTS."""
 
     # ── preflight: keys + deps ─────────────────────────────────────
@@ -174,30 +186,55 @@ async def run_voice_mode(session: Session, persona: ManagerPersona, max_turns: i
             break
 
         print(f"   you> {user_text}")
-        session.append_trace_event(
-            {
-                "event_type": "voice.utterance_in",
-                "actor": "user",
-                "timestamp": now_utc().isoformat(),
-                "payload": {"text": user_text, "turn": turn_idx, "mode": "voice"},
-            }
-        )
+        log_utterance_in(session, user_text, turn_idx, mode="voice")
 
         if user_text.lower().strip(".!?") in ("goodbye", "bye", "cheerio"):
+            print(f"   alasdair> {GOODBYE_TEXT}")
+            log_utterance_out(session, GOODBYE_TEXT, turn_idx, mode="voice")
+            if rime_enabled:
+                try:
+                    await _speak_rime(GOODBYE_TEXT, rime_key, sd)
+                except Exception as e:  # noqa: BLE001
+                    print(f"   ⚠ TTS playback failed: {e} (continuing)", file=sys.stderr)
+            break
+
+        validation = validate_entry_message(user_text)
+        if not validation.usable:
+            print(f"   alasdair> {validation.clarification}")
+            log_utterance_out(session, validation.clarification, turn_idx, mode="voice")
+            if rime_enabled:
+                try:
+                    await _speak_rime(validation.clarification, rime_key, sd)
+                except Exception as e:  # noqa: BLE001
+                    print(f"   ⚠ TTS playback failed: {e} (continuing)", file=sys.stderr)
+            continue
+
+        if _is_redirect_acknowledgement(validation.text, persona):
+            print(f"   alasdair> {REDIRECT_CLOSE_TEXT}")
+            log_utterance_out(session, REDIRECT_CLOSE_TEXT, turn_idx, mode="voice")
+            if rime_enabled:
+                try:
+                    await _speak_rime(REDIRECT_CLOSE_TEXT, rime_key, sd)
+                except Exception as e:  # noqa: BLE001
+                    print(f"   ⚠ TTS playback failed: {e} (continuing)", file=sys.stderr)
+            break
+
+        if _is_confirmation_acknowledgement(validation.text, persona):
+            print(f"   alasdair> {CONFIRMATION_CLOSE_TEXT}")
+            log_utterance_out(session, CONFIRMATION_CLOSE_TEXT, turn_idx, mode="voice")
+            if rime_enabled:
+                try:
+                    await _speak_rime(CONFIRMATION_CLOSE_TEXT, rime_key, sd)
+                except Exception as e:  # noqa: BLE001
+                    print(f"   ⚠ TTS playback failed: {e} (continuing)", file=sys.stderr)
             break
 
         # ── get manager reply ──────────────────────────────────────
-        manager_text = await persona.respond(user_text)
+        manager_text = await persona.respond(validation.text)
         print(f"   alasdair> {manager_text}")
+        _print_judgement(persona, prefix="   ")
 
-        session.append_trace_event(
-            {
-                "event_type": "voice.utterance_out",
-                "actor": "manager",
-                "timestamp": now_utc().isoformat(),
-                "payload": {"text": manager_text, "turn": turn_idx, "mode": "voice"},
-            }
-        )
+        log_utterance_out(session, manager_text, turn_idx, mode="voice")
 
         # ── speak reply via Rime TTS (if enabled) ──────────────────
         if rime_enabled:
@@ -205,6 +242,8 @@ async def run_voice_mode(session: Session, persona: ManagerPersona, max_turns: i
                 await _speak_rime(manager_text, rime_key, sd)
             except Exception as e:  # noqa: BLE001
                 print(f"   ⚠ TTS playback failed: {e} (continuing)", file=sys.stderr)
+        if _is_terminal_hard_decline(manager_text):
+            break
 
     print("-" * 60)
     print(f"Conversation ended. Trace: {session.trace_path}")
@@ -384,6 +423,64 @@ async def _speak_rime(text: str, api_key: str, sd) -> None:
     samples = np.array(segment.get_array_of_samples(), dtype=np.int16)
     sd.play(samples, samplerate=SAMPLE_RATE)
     sd.wait()
+
+
+def _print_judgement(persona: ManagerPersona, prefix: str = "") -> None:
+    """Print the latest one-pass judge result without writing it to the trace."""
+    judgement = getattr(persona, "last_judgement", None)
+    if judgement is None:
+        return
+    status = "approved" if judgement.approved else "corrected"
+    reason = judgement.reason or "no reason supplied"
+    print(f"{prefix}judge> {status}: {reason}")
+
+
+def _is_redirect_acknowledgement(text: str, persona: ManagerPersona) -> bool:
+    """Detect a customer accepting a hard decline or alternative-venue redirect."""
+    normalized = text.lower().strip(" .!?")
+    if normalized not in {"ok", "okay", "thanks", "thank you", "cheers", "alright", "fine"}:
+        return False
+    if not persona.history:
+        return False
+    last_response = persona.history[-1].manager_response.lower()
+    redirect_markers = (
+        "royal oak",
+        "bennet",
+        "larger venue",
+        "parties that large",
+        "can't take bookings",
+        "cannot book that venue",
+        "can't book that venue",
+        "head office",
+        "sign-off",
+    )
+    return any(marker in last_response for marker in redirect_markers)
+
+
+def _is_confirmation_acknowledgement(text: str, persona: ManagerPersona) -> bool:
+    """Detect a customer accepting the final booking verification."""
+    normalized = text.lower().strip(" .!?")
+    if normalized not in {"yes", "yep", "yeah", "aye", "ok", "okay", "that's fine", "fine"}:
+        return False
+    if not persona.history:
+        return False
+    last_response = persona.history[-1].manager_response.lower()
+    return "are you happy with that" in last_response
+
+
+def _is_terminal_hard_decline(text: str) -> bool:
+    """Return true when the manager has ended the current booking path."""
+    normalized = text.lower()
+    capacity_decline = (
+        ("cannot accommodate" in normalized or "can't accommodate" in normalized)
+        and ("royal oak" in normalized or "bennet" in normalized)
+    )
+    deposit_signoff = (
+        ("£300" in normalized or "300" in normalized)
+        and ("consult my manager" in normalized or "manager" in normalized)
+        and ("call later" in normalized or "call you later" in normalized or "follow up" in normalized)
+    )
+    return capacity_decline or deposit_signoff
 
 
 __all__ = ["run_text_mode", "run_voice_mode"]

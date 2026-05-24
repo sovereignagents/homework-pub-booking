@@ -39,11 +39,6 @@ slots:
     mappings:
       - type: controlled
 
-responses:
-  utter_booking_confirmed:
-    - text: "Booking confirmed. Reference: {booking_reference}."
-  utter_booking_rejected:
-    - text: "Sorry, we can't accept this booking. Reason: {validation_error}"
 
 actions:
   - action_validate_booking
@@ -52,3 +47,15 @@ actions:
 session_config:
   session_expiration_time: 60
   carry_over_slots_to_new_session: false
+
+responses:
+  utter_booking_confirmed:
+    - text: "Booking confirmed. Reference: {booking_reference}."
+
+  utter_booking_rejected:
+    - text: "Sorry, we can't accept this booking. Reason: {validation_error}"
+
+  utter_request_research:
+    - text: "Let me look for another venue that fits your requirements."
+      custom:
+        action: request_research
