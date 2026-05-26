@@ -181,11 +181,11 @@ and may or may not accept the booking.
 
 2. **Voice loop** in `voice_loop.py` — STT → agent → TTS round-trip:
    - Text mode (`--text`): reads from stdin, prints responses.
-   - Voice mode (`--voice`): uses Speechmatics for STT and ElevenLabs for TTS.
+   - Voice mode (`--voice`): uses fully offline local models (Whisper for STT, Piper for TTS).
    - In both modes, the conversation is logged to the session as trace events
      with the correct event types (`voice.utterance_in`, `voice.utterance_out`).
 
-3. **Graceful degradation**: if `SPEECHMATICS_KEY` is missing but `--voice`
+3. **Graceful degradation**: if local models or dependencies fail to load but `--voice`
    was passed, fall back to text mode with a visible warning. Don't crash.
 
 ### How you're graded
@@ -194,12 +194,11 @@ and may or may not accept the booking.
 |---|---|
 | Text mode runs a full 3+ turn conversation | 6 pts |
 | Manager persona stays in character (LLM-as-judge, see §Reasoning) | 4 pts |
-| Voice mode works end-to-end (if attempted and keys are set) | 4 pts |
+| Voice mode works end-to-end (if attempted) | 4 pts |
 | Every utterance is in the trace with correct event_type | 3 pts |
-| Missing-key graceful degradation | 3 pts |
+| Missing dependency graceful degradation | 3 pts |
 
-**Note:** If you don't have Speechmatics credentials and skip voice mode
-entirely, you can still score up to 16/20 on Ex8.
+**Note:** If you cannot run local voice models and skip voice mode entirely, you can still score up to 16/20 on Ex8.
 
 ---
 

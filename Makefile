@@ -65,11 +65,11 @@ help: ## Structured help — your actual starting point
 	@echo ''
 	@echo '  ${GREEN}Ex8${RESET}  — Voice pipeline ${DIM}${RESET}'
 	@echo '      ${CYAN}make ex8-text${RESET}            text mode (free, no mic)'
-	@echo '      ${CYAN}make ex8-voice${RESET}           real Speechmatics + Rime (needs setup-voice + mic)'
+	@echo '      ${CYAN}make ex8-voice${RESET}           real local Whisper + Piper TTS (needs setup-voice + mic)'
 	@echo ''
 	@echo '${YELLOW}${BOLD}🔧 OPTIONAL INSTALLS${RESET} ${DIM}(install only when you reach that exercise)${RESET}'
 	@echo '  ${CYAN}make setup-rasa${RESET}              rasa-pro for Ex6 (~400MB, ~2min)'
-	@echo '  ${CYAN}make setup-voice${RESET}             speechmatics + sounddevice + pydub for Ex8 voice'
+	@echo '  ${CYAN}make setup-voice${RESET}             whisper + piper-tts + sounddevice for Ex8 voice'
 	@echo ''
 	@echo '${YELLOW}${BOLD}🎭 RASA (Ex6 ONLY)${RESET} ${DIM}three terminals — read docs/rasa-setup.md first${RESET}'
 	@echo '  ${DIM}Terminal 1:${RESET} ${CYAN}make rasa-actions${RESET}      action server on :5055'
@@ -210,13 +210,14 @@ setup-rasa: ## Install rasa-pro + deps (needed for Ex6 tier 2 and 3)
 	@echo "✓ rasa-pro installed. You can now run: make rasa-actions / make rasa-serve"
 
 .PHONY: setup-voice
-setup-voice: ## Install speechmatics + rime TTS + mic deps (needed for Ex8 voice mode)
-	@echo "▶ Installing voice deps (speechmatics, sounddevice, pydub)..."
-	@echo "   Requires portaudio. On macOS: brew install portaudio"
+setup-voice: ## Install local voice deps (whisper, piper-tts, sounddevice)
+	@echo "▶ Installing voice deps (whisper, piper-tts, sounddevice)..."
+	@echo "   Requires portaudio and ALSA plugins."
+	@echo "   On Ubuntu/Debian: sudo apt-get install -y portaudio19-dev libasound2-plugins"
+	@echo "   On macOS: brew install portaudio"
 	@$(UV) sync --extra voice
 	@echo ""
 	@echo "✓ voice deps installed. For Ex8 voice mode you still need:"
-	@echo "    - SPEECHMATICS_KEY + RIME_API_KEY in .env"
 	@echo "    - macOS: System Settings → Privacy & Security → Microphone"
 	@echo "             → grant your terminal app access"
 	@echo "    - Then: make ex8-voice"
